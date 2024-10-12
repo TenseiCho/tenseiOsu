@@ -1,0 +1,15 @@
+[install]
+# Use the exact versions specified in package.json
+exact = true
+
+[install.scopes]
+# Use the NPM registry for all scopes
+"*" = "https://registry.npmjs.org"
+
+[test]
+# Configure test runner (if you plan to use Bun for testing)
+preload = "./test/setup.ts"
+
+[dev]
+# Configure development server (if needed)
+port = 3000
