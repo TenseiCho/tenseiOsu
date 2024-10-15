@@ -1,23 +1,22 @@
-import { Scene } from 'phaser';
+import { Scene, Sound, Input, Tweens, GameObjects } from 'phaser';
 
-export class GameScene extends Scene
-{
-    constructor ()
-    {
+export class GameScene extends Scene {
+    private music: Sound.BaseSound | null = null;
+    private paused: boolean = false;
+    private pausedText: GameObjects.Text | null = null;
+    private mainMenuText: GameObjects.Text | null = null;
+    private startText: GameObjects.Text | null = null;
+    private retryText: GameObjects.Text | null = null;
+    private escapeKey: Input.Keyboard.Key | null = null;
+    private handleBlur: () => void;
+    private fadeOverlay: GameObjects.Rectangle | null = null;
+
+    constructor() {
         super('GameScene');
-        this.music = null;
-        this.paused = false; // Initialize paused state
-        this.pausedText = null; // Initialize paused text
-        this.mainMenuText = null; // Initialize Main Menu text
-        this.startText = null; // Initialize Start text
-        this.retryText = null; // {{ edit_28 }} Initialize Retry text
-        this.escapeKey = null; // Initialize Escape key
-        this.handleBlur = this.pauseGame.bind(this); // {{ edit_29 }} Store bound blur handler
-        this.handleFocus = this.resumeGame.bind(this); // {{ edit_30 }} Store bound focus handler
+        this.handleBlur = this.pauseGame.bind(this);
     }
 
-    preload ()
-    {
+    preload(): void {
         // Load the Flandre image
         this.load.image('flandre', 'assets/flandre.png');
         
@@ -25,8 +24,7 @@ export class GameScene extends Scene
         this.load.audio('flandreTheme', 'assets/Flandre_Theme.wav');
     }
 
-    create ()
-    {
+    create(): void {
         // Add Flandre as the background
         const flandre = this.add.image(this.cameras.main.centerX, this.cameras.main.centerY, 'flandre');
         
@@ -37,14 +35,13 @@ export class GameScene extends Scene
         this.music = this.sound.add('flandreTheme', { loop: true });
         this.music.play();
 
-        // Add event listeners for window focus and blur
-        window.addEventListener('blur', this.handleBlur); // {{ edit_34 }} Use stored blur handler
-        window.addEventListener('focus', this.handleFocus); // {{ edit_35 }} Use stored focus handler
+        // Add event listeners for window blur
+        window.addEventListener('blur', this.handleBlur);
 
         // Remove existing pointerdown handler
         this.input.off('pointerdown'); // Remove existing handler
 
-        // {{ edit_25 }} Add Escape key listener
+        // Add Escape key listener
         this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
         this.escapeKey.on('down', () => {
             if (this.paused) {
@@ -55,7 +52,7 @@ export class GameScene extends Scene
         });
     }
 
-    pauseGame() {
+    pauseGame(): void {
         if (this.paused) return; // Prevent multiple pauses
 
         // Slightly fade the background by overlaying a semi-transparent rectangle
@@ -86,15 +83,15 @@ export class GameScene extends Scene
         this.mainMenuText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 180, 'Quit', 
             { fontSize: '48px', fill: '#fff' })
             .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true }) // {{ edit_17 }} Make interactive
-            .on('pointerdown', () => this.goToMainMenu()); // {{ edit_18 }} Add click handler
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.goToMainMenu());
 
         // Pause music
-        this.music.pause();
+        this.music?.pause();
         this.paused = true;
     }
 
-    resumeGame() {
+    resumeGame(): void {
         if (!this.paused) return; // Prevent resuming if not paused
 
         // Remove the fade overlay
@@ -128,39 +125,38 @@ export class GameScene extends Scene
         }
 
         // Resume music
-        this.music.resume();
+        this.music?.resume();
         this.paused = false;
     }
 
-    goToMainMenu() { // Add goToMainMenu method
+    goToMainMenu(): void { // Add goToMainMenu method
         // Optionally, stop music or perform any cleanup
-        this.music.stop();
+        this.music?.stop();
         this.scene.start('MainMenu'); // Transition to Main Menu scene
     }
 
-    fadeOutMusic() {
+    fadeOutMusic(): void {
         this.tweens.add({
             targets: this.music,
             volume: 0,
             duration: 1000, // 1 second fade out
             onComplete: () => {
-                this.music.stop();
+                this.music?.stop();
                 this.scene.start('MainMenu');
             }
         });
     }
 
-    shutdown() { // {{ edit_36 }} Add shutdown method
-        window.removeEventListener('blur', this.handleBlur); // {{ edit_37 }} Remove blur listener
-        window.removeEventListener('focus', this.handleFocus); // {{ edit_38 }} Remove focus listener
+    shutdown(): void { // Add shutdown method
+        window.removeEventListener('blur', this.handleBlur);
     }
 
-    destroy() { // Add destroy method
+    destroy(): void { // Add destroy method
         this.shutdown();
         super.destroy();
     }
 
-    restartGame() { // {{ edit_39 }} Add restartGame method
+    restartGame(): void { // {{ edit_39 }} Add restartGame method
         this.scene.restart(); // Restart the current scene
     }
 }
