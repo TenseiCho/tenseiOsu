@@ -23,7 +23,7 @@ This project uses [Bun](https://bun.sh/) as the JavaScript runtime and package m
 
 ## Technology Stack
 
-- JavaScript
+- TypeScript
 - Phaser 3 (Game Framework)
 - Vite (Build Tool)
 - Bun (JavaScript Runtime and Package Manager)
