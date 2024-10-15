@@ -62,26 +62,26 @@ export class GameScene extends Scene {
 
         // Show paused text
         this.pausedText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY - 50, 'Paused', 
-            { fontSize: '76px', fill: '#fff' })
+            { fontSize: '76px', color: '#fff' })
             .setOrigin(0.5); // Position "Paused" text slightly higher
 
         // Add "Continue" option
         this.startText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 60, 'Continue', 
-            { fontSize: '48px', fill: '#fff' })
+            { fontSize: '48px', color: '#fff' })
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.resumeGame());
 
         // Add "Retry" option
         this.retryText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 120, 'Retry', 
-            { fontSize: '48px', fill: '#fff' })
+            { fontSize: '48px', color: '#fff' })
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.restartGame());
 
         // Add "Quit" option
         this.mainMenuText = this.add.text(this.cameras.main.centerX, this.cameras.main.centerY + 180, 'Quit', 
-            { fontSize: '48px', fill: '#fff' })
+            { fontSize: '48px', color: '#fff' })
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
             .on('pointerdown', () => this.goToMainMenu());
