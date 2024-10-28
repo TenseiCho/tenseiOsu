@@ -10,6 +10,14 @@ export class GameScene extends Scene {
     private escapeKey: Input.Keyboard.Key | null = null;
     private handleBlur: () => void;
     private fadeOverlay: GameObjects.Rectangle | null = null;
+    private scoreText: GameObjects.Text | null = null;
+    private scoreNumberText: GameObjects.Text | null = null;
+    private score: number = 0;
+    private blurFilter: Phaser.FX.Blur | null = null;
+    // Add new properties for combo
+    private comboText: GameObjects.Text | null = null;
+    private comboNumberText: GameObjects.Text | null = null;
+    private combo: number = 0;
 
     constructor() {
         super('GameScene');
@@ -50,6 +58,42 @@ export class GameScene extends Scene {
                 this.pauseGame();
             }
         });
+
+        // Add score display with blur filter capability
+        this.scoreText = this.add.text(20, 20, 'Score', {
+            fontSize: '32px',
+            color: '#ffffff'
+        }).setPostPipeline(Phaser.Renderer.WebGL.Pipelines.BlurPostFX);
+
+        this.scoreNumberText = this.add.text(20, 60, '000000', {
+            fontSize: '28px',
+            color: '#ffffff',
+            fontFamily: 'monospace'
+        }).setPostPipeline(Phaser.Renderer.WebGL.Pipelines.BlurPostFX);
+
+        // Initialize blur but set to 0
+        this.blurFilter = this.scoreText.postFX?.addBlur(0, 0, 0, 4) || null;
+        this.scoreNumberText.postFX?.addBlur(0, 0, 0, 4);
+
+        // Add combo display with blur filter capability
+        this.comboText = this.add.text(20, this.cameras.main.height - 80, 'Combo', {
+            fontSize: '32px',
+            color: '#ffffff'
+        });
+
+        this.comboNumberText = this.add.text(20, this.cameras.main.height - 40, '0x', {
+            fontSize: '28px',
+            color: '#ffffff',
+            fontFamily: 'monospace'
+        });
+
+        // Add blur post-processing to combo texts
+        this.comboText.setPostPipeline('BlurPostFX');
+        this.comboNumberText.setPostPipeline('BlurPostFX');
+
+        // Initialize blur but set to 0
+        this.comboText.postFX?.addBlur(0, 0, 0, 4);
+        this.comboNumberText.postFX?.addBlur(0, 0, 0, 4);
     }
 
     pauseGame(): void {
@@ -89,6 +133,22 @@ export class GameScene extends Scene {
         // Pause music
         this.music?.pause();
         this.paused = true;
+
+        // Add blur effect to score
+        this.scoreText?.postFX?.setBlur(2);
+        this.scoreNumberText?.postFX?.setBlur(2);
+
+        // Add blur effect to combo
+        this.comboText?.postFX?.setBlur(2);
+        this.comboNumberText?.postFX?.setBlur(2);
+
+        // Ensure score stays visible above the overlay
+        this.scoreText?.setDepth(2);
+        this.scoreNumberText?.setDepth(2);
+
+        // Ensure combo stays visible above the overlay
+        this.comboText?.setDepth(2);
+        this.comboNumberText?.setDepth(2);
     }
 
     resumeGame(): void {
@@ -127,6 +187,22 @@ export class GameScene extends Scene {
         // Resume music
         this.music?.resume();
         this.paused = false;
+
+        // Reset score depth
+        this.scoreText?.setDepth(0);
+        this.scoreNumberText?.setDepth(0);
+
+        // Reset combo depth
+        this.comboText?.setDepth(0);
+        this.comboNumberText?.setDepth(0);
+
+        // Remove blur effect from score
+        this.scoreText?.postFX?.setBlur(0);
+        this.scoreNumberText?.postFX?.setBlur(0);
+
+        // Remove blur effect from combo
+        this.comboText?.postFX?.setBlur(0);
+        this.comboNumberText?.postFX?.setBlur(0);
     }
 
     goToMainMenu(): void { // Add goToMainMenu method
@@ -157,6 +233,36 @@ export class GameScene extends Scene {
     }
 
     restartGame(): void { // {{ edit_39 }} Add restartGame method
-        this.scene.restart(); // Restart the current scene
+        this.score = 0;
+        this.combo = 0; // Reset combo on restart
+        if (this.scoreNumberText) {
+            this.scoreNumberText.setText('000000');
+        }
+        if (this.comboNumberText) {
+            this.comboNumberText.setText('0x');
+        }
+        this.scene.restart();
+    }
+
+    updateScore(points: number): void {
+        this.score += points;
+        if (this.scoreNumberText) {
+            this.scoreNumberText.setText(this.score.toString().padStart(6, '0'));
+        }
+    }
+
+    // Add methods to handle combo
+    increaseCombo(): void {
+        this.combo++;
+        if (this.comboNumberText) {
+            this.comboNumberText.setText(`${this.combo}x`);
+        }
+    }
+
+    resetCombo(): void {
+        this.combo = 0;
+        if (this.comboNumberText) {
+            this.comboNumberText.setText('0x');
+        }
     }
 }
