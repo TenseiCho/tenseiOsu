@@ -18,6 +18,8 @@ export class GameScene extends Scene {
     private comboText: GameObjects.Text | null = null;
     private comboNumberText: GameObjects.Text | null = null;
     private combo: number = 0;
+    private durationBar: GameObjects.Rectangle | null = null;
+    private durationBarBg: GameObjects.Rectangle | null = null;
 
     constructor() {
         super('GameScene');
@@ -75,14 +77,14 @@ export class GameScene extends Scene {
         this.blurFilter = this.scoreText.postFX?.addBlur(0, 0, 0, 4) || null;
         this.scoreNumberText.postFX?.addBlur(0, 0, 0, 4);
 
-        // Add combo display with blur filter capability
-        this.comboText = this.add.text(20, this.cameras.main.height - 80, 'Combo', {
+        // Add combo display with blur filter capability (moved up 13 pixels)
+        this.comboText = this.add.text(20, this.cameras.main.height - 103, 'Combo', {
             fontSize: '32px',
             color: '#ffffff'
         });
 
-        this.comboNumberText = this.add.text(20, this.cameras.main.height - 40, '0x', {
-            fontSize: '28px',
+        this.comboNumberText = this.add.text(20, this.cameras.main.height - 63, '0x', {
+            fontSize: '48px',
             color: '#ffffff',
             fontFamily: 'monospace'
         });
@@ -94,6 +96,42 @@ export class GameScene extends Scene {
         // Initialize blur but set to 0
         this.comboText.postFX?.addBlur(0, 0, 0, 4);
         this.comboNumberText.postFX?.addBlur(0, 0, 0, 4);
+
+        // Add duration bar background (gray bar) with padding
+        const padding = 20; // 20px padding on each side
+        this.durationBarBg = this.add.rectangle(
+            padding, // Start after padding
+            this.cameras.main.height - 10,
+            this.cameras.main.width - (padding * 2), // Total width minus padding on both sides
+            5,
+            0x333333
+        ).setOrigin(0, 0);
+
+        // Add duration bar (blue progress bar)
+        this.durationBar = this.add.rectangle(
+            padding, // Start after padding
+            this.cameras.main.height - 10,
+            0,
+            5,
+            0x00a2ff
+        ).setOrigin(0, 0);
+
+        // Update the updateDurationBar method to account for padding
+        this.time.addEvent({
+            delay: 100,
+            callback: this.updateDurationBar,
+            callbackScope: this,
+            loop: true
+        });
+    }
+
+    private updateDurationBar(): void {
+        if (this.music && this.durationBar && this.durationBarBg) {
+            const progress = this.music.seek / this.music.duration;
+            const maxWidth = this.cameras.main.width - 40; // Total width minus padding on both sides
+            const width = maxWidth * progress;
+            this.durationBar.width = width;
+        }
     }
 
     pauseGame(): void {
@@ -149,6 +187,10 @@ export class GameScene extends Scene {
         // Ensure combo stays visible above the overlay
         this.comboText?.setDepth(2);
         this.comboNumberText?.setDepth(2);
+
+        // Ensure duration bars stay visible above overlay
+        this.durationBarBg?.setDepth(2);
+        this.durationBar?.setDepth(2);
     }
 
     resumeGame(): void {
@@ -203,6 +245,10 @@ export class GameScene extends Scene {
         // Remove blur effect from combo
         this.comboText?.postFX?.setBlur(0);
         this.comboNumberText?.postFX?.setBlur(0);
+
+        // Reset duration bars depth
+        this.durationBarBg?.setDepth(0);
+        this.durationBar?.setDepth(0);
     }
 
     goToMainMenu(): void { // Add goToMainMenu method
