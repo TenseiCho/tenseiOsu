@@ -1,8 +1,10 @@
 import { Scene, Sound, Input, Tweens, GameObjects } from 'phaser';
 
 export class GameScene extends Scene {
-    private music: Sound.BaseSound | null = null;
-    private paused: boolean = false;
+    protected music: Sound.BaseSound | null = null;
+    protected paused: boolean = false;
+    protected score: number = 0;
+    protected combo: number = 0;
     private pausedText: GameObjects.Text | null = null;
     private mainMenuText: GameObjects.Text | null = null;
     private startText: GameObjects.Text | null = null;
@@ -12,12 +14,9 @@ export class GameScene extends Scene {
     private fadeOverlay: GameObjects.Rectangle | null = null;
     private scoreText: GameObjects.Text | null = null;
     private scoreNumberText: GameObjects.Text | null = null;
-    private score: number = 0;
     private blurFilter: Phaser.FX.Blur | null = null;
-    // Add new properties for combo
     private comboText: GameObjects.Text | null = null;
     private comboNumberText: GameObjects.Text | null = null;
-    private combo: number = 0;
     private durationBar: GameObjects.Rectangle | null = null;
     private durationBarBg: GameObjects.Rectangle | null = null;
     private cursor: Phaser.GameObjects.Image | null = null;
