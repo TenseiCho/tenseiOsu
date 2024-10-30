@@ -20,6 +20,9 @@ export class GameScene extends Scene {
     private combo: number = 0;
     private durationBar: GameObjects.Rectangle | null = null;
     private durationBarBg: GameObjects.Rectangle | null = null;
+    private cursor: Phaser.GameObjects.Image | null = null;
+    private cursorTrail: Phaser.GameObjects.Image[] = [];
+    private readonly MAX_TRAIL_LENGTH = 5; // Adjust this value to change trail length
 
     constructor() {
         super('GameScene');
@@ -32,6 +35,8 @@ export class GameScene extends Scene {
         
         // Load the Flandre theme
         this.load.audio('flandreTheme', 'assets/Flandre_Theme.wav');
+        this.load.image('cursor', 'assets/cursor.png');
+        this.load.image('cursortrail', 'assets/cursortrail.png');
     }
 
     create(): void {
@@ -123,6 +128,39 @@ export class GameScene extends Scene {
             callbackScope: this,
             loop: true
         });
+
+        // Hide the default cursor when inside the game canvas
+        this.game.canvas.style.cursor = 'none';
+
+        // Create the custom cursor
+        this.cursor = this.add.image(0, 0, 'cursor');
+        this.cursor.setDepth(1000); // Ensure it's always on top
+
+        // Initialize cursor trail
+        for (let i = 0; i < this.MAX_TRAIL_LENGTH; i++) {
+            const trail = this.add.image(0, 0, 'cursortrail');
+            trail.setAlpha(1 - (i / this.MAX_TRAIL_LENGTH)); // Fade out trail pieces
+            trail.setDepth(999 - i); // Stack trail below cursor
+            this.cursorTrail.push(trail);
+        }
+
+        // Update cursor position on pointer move
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            if (this.cursor) {
+                this.cursor.setPosition(pointer.x, pointer.y);
+                
+                // Update trail positions
+                for (let i = this.cursorTrail.length - 1; i > 0; i--) {
+                    this.cursorTrail[i].setPosition(
+                        this.cursorTrail[i - 1].x,
+                        this.cursorTrail[i - 1].y
+                    );
+                }
+                if (this.cursorTrail.length > 0) {
+                    this.cursorTrail[0].setPosition(pointer.x, pointer.y);
+                }
+            }
+        });
     }
 
     private updateDurationBar(): void {
@@ -191,6 +229,10 @@ export class GameScene extends Scene {
         // Ensure duration bars stay visible above overlay
         this.durationBarBg?.setDepth(2);
         this.durationBar?.setDepth(2);
+
+        // Hide cursor and trail during pause
+        this.cursor?.setVisible(false);
+        this.cursorTrail.forEach(trail => trail.setVisible(false));
     }
 
     resumeGame(): void {
@@ -249,6 +291,10 @@ export class GameScene extends Scene {
         // Reset duration bars depth
         this.durationBarBg?.setDepth(0);
         this.durationBar?.setDepth(0);
+
+        // Show cursor and trail when resuming
+        this.cursor?.setVisible(true);
+        this.cursorTrail.forEach(trail => trail.setVisible(true));
     }
 
     goToMainMenu(): void { // Add goToMainMenu method
@@ -274,6 +320,10 @@ export class GameScene extends Scene {
     }
 
     destroy(): void { // Add destroy method
+        // Restore default cursor when leaving the scene
+        this.game.canvas.style.cursor = 'default';
+        
+        // Existing destroy code...
         this.shutdown();
         super.destroy();
     }
