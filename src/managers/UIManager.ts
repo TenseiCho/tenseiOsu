@@ -50,9 +50,24 @@ export class UIManager {
     }
 
     setBlur(amount: number): void {
+        // Remove post-processing pipeline when blur is 0
+        if (amount === 0) {
+            [this.scoreText, this.scoreNumberText, this.comboText, this.comboNumberText].forEach(text => {
+                if (text?.postFX) {
+                    text.resetPostPipeline();
+                }
+            });
+            return;
+        }
+
+        // Apply a more subtle blur effect
         [this.scoreText, this.scoreNumberText, this.comboText, this.comboNumberText].forEach(text => {
-            if (text?.postFX) {
-                text.postFX.addBlur(amount, amount, 0, 4);
+            if (text) {
+                text.setPostPipeline('BlurPostFX');
+                if (text.postFX) {
+                    // Reduced blur values and increased quality
+                    text.postFX.addBlur(0.5, 0.5, 1, 2);  // Smaller numbers for a subtler effect
+                }
             }
         });
     }

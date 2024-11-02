@@ -25,14 +25,14 @@ export class PauseManager {
             this.scene.cameras.main.width,
             this.scene.cameras.main.height,
             0x000000, 0.5
-        ).setOrigin(0).setDepth(1);
+        ).setOrigin(0).setDepth(100);
 
         this.pausedText = this.scene.add.text(
             this.scene.cameras.main.centerX,
             this.scene.cameras.main.centerY - 50,
             'Paused',
             { fontSize: '76px', color: '#fff' }
-        ).setOrigin(0.5);
+        ).setOrigin(0.5).setDepth(101);
 
         this.startText = this.scene.add.text(
             this.scene.cameras.main.centerX,
@@ -40,7 +40,8 @@ export class PauseManager {
             'Continue',
             { fontSize: '48px', color: '#fff' }
         ).setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
+            .setInteractive({ useHandCursor: true })
+            .setDepth(101);
 
         this.retryText = this.scene.add.text(
             this.scene.cameras.main.centerX,
@@ -48,15 +49,28 @@ export class PauseManager {
             'Retry',
             { fontSize: '48px', color: '#fff' }
         ).setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
+            .setInteractive({ useHandCursor: true })
+            .setDepth(101);
 
-            this.mainMenuText = this.scene.add.text(
-                this.scene.cameras.main.centerX,
-                this.scene.cameras.main.centerY + 180,
-                'Quit',
-                { fontSize: '48px', color: '#fff' }
-            ).setOrigin(0.5)
-                .setInteractive({ useHandCursor: true });
+        this.mainMenuText = this.scene.add.text(
+            this.scene.cameras.main.centerX,
+            this.scene.cameras.main.centerY + 180,
+            'Quit',
+            { fontSize: '48px', color: '#fff' }
+        ).setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(101);
+
+        [this.startText, this.retryText, this.mainMenuText].forEach(text => {
+            if (text) {
+                text.on('pointerover', () => {
+                    text.setScale(1.1);
+                });
+                text.on('pointerout', () => {
+                    text.setScale(1);
+                });
+            }
+        });
 
         this.paused = true;
     }
