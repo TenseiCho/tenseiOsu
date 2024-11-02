@@ -36,7 +36,7 @@ export class GameScene extends Scene {
         this.pauseManager = new PauseManager(this);
 
         // Setup pause key
-        this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+        this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC) as Phaser.Input.Keyboard.Key;
         this.escapeKey.on('down', () => {
             if (this.pauseManager.isPaused()) {
                 this.resumeGame();

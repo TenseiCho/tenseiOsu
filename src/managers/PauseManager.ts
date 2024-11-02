@@ -8,6 +8,11 @@ export class PauseManager {
     private startText: GameObjects.Text | null = null;
     private retryText: GameObjects.Text | null = null;
     private fadeOverlay: GameObjects.Rectangle | null = null;
+    private callbacks: {
+        onContinue?: () => void;
+        onRetry?: () => void;
+        onQuit?: () => void;
+    } = {};
 
     constructor(scene: Scene) {
         this.scene = scene;
@@ -25,51 +30,42 @@ export class PauseManager {
             this.scene.cameras.main.width,
             this.scene.cameras.main.height,
             0x000000, 0.5
-        ).setOrigin(0).setDepth(100);
+        ).setOrigin(0)
+         .setDepth(100)
+         .setInteractive();
 
-        this.pausedText = this.scene.add.text(
-            this.scene.cameras.main.centerX,
-            this.scene.cameras.main.centerY - 50,
-            'Paused',
-            { fontSize: '76px', color: '#fff' }
-        ).setOrigin(0.5).setDepth(101);
+        const menuItems = [
+            { text: 'Continue', y: 60, callback: () => this.callbacks?.onContinue?.() },
+            { text: 'Retry', y: 120, callback: () => this.callbacks?.onRetry?.() },
+            { text: 'Quit', y: 180, callback: () => this.callbacks?.onQuit?.() }
+        ];
 
-        this.startText = this.scene.add.text(
-            this.scene.cameras.main.centerX,
-            this.scene.cameras.main.centerY + 60,
-            'Continue',
-            { fontSize: '48px', color: '#fff' }
-        ).setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .setDepth(101);
+        [this.startText, this.retryText, this.mainMenuText] = menuItems.map(({ text, y, callback }) => {
+            const menuItem = this.scene.add.text(
+                this.scene.cameras.main.centerX,
+                this.scene.cameras.main.centerY + y,
+                text,
+                { 
+                    fontSize: '48px', 
+                    color: '#fff',
+                    fontFamily: 'monospace'
+                }
+            ).setOrigin(0.5)
+             .setDepth(101)
+             .setInteractive({ useHandCursor: true })
+             .on('pointerup', callback);
 
-        this.retryText = this.scene.add.text(
-            this.scene.cameras.main.centerX,
-            this.scene.cameras.main.centerY + 120,
-            'Retry',
-            { fontSize: '48px', color: '#fff' }
-        ).setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .setDepth(101);
+            menuItem.on('pointerover', () => {
+                menuItem.setScale(1.1);
+                menuItem.setStyle({ color: '#00a2ff' });
+            });
+            
+            menuItem.on('pointerout', () => {
+                menuItem.setScale(1.0);
+                menuItem.setStyle({ color: '#fff' });
+            });
 
-        this.mainMenuText = this.scene.add.text(
-            this.scene.cameras.main.centerX,
-            this.scene.cameras.main.centerY + 180,
-            'Quit',
-            { fontSize: '48px', color: '#fff' }
-        ).setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .setDepth(101);
-
-        [this.startText, this.retryText, this.mainMenuText].forEach(text => {
-            if (text) {
-                text.on('pointerover', () => {
-                    text.setScale(1.1);
-                });
-                text.on('pointerout', () => {
-                    text.setScale(1);
-                });
-            }
+            return menuItem;
         });
 
         this.paused = true;
@@ -96,8 +92,6 @@ export class PauseManager {
         onRetry: () => void,
         onQuit: () => void
     }): void {
-        this.startText?.on('pointerdown', callbacks.onContinue);
-        this.retryText?.on('pointerdown', callbacks.onRetry);
-        this.mainMenuText?.on('pointerdown', callbacks.onQuit);
+        this.callbacks = callbacks;
     }
 }
