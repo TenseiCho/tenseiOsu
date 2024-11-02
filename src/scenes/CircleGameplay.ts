@@ -24,8 +24,8 @@ export class CircleGameplay extends GameScene {
     }
 
     private handleCircleClick(pointer: Phaser.Input.Pointer): void {
-        // Handle circle clicking logic
-        if (this.paused) return;
+        // Check pause state through PauseManager instead of undefined paused property
+        if (this.pauseManager.isPaused()) return;
         
         // Add your circle hit detection and scoring logic here
     }
@@ -58,7 +58,7 @@ export class CircleGameplay extends GameScene {
 
     private handleMiss(circle: GameObjects.Container): void {
         // Handle when player misses a circle
-        this.resetCombo();
+        this.uiManager.resetCombo();
         circle.destroy();
         const index = this.circles.indexOf(circle);
         if (index > -1) {
