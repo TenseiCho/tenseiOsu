@@ -1,0 +1,135 @@
+code_review:
+  project: tenseiOsu!
+  file: src/scenes/GameScene.ts
+  suggestions:
+    scene_management:
+      description: Split GameScene into focused components
+      components:
+        - name: UIManager
+          responsibility: Handle UI elements (score, combo, pause menu)
+        - name: CursorManager
+          responsibility: Handle cursor and trail logic
+        - name: AudioManager
+          responsibility: Handle music-related functionality
+        - name: PauseManager
+          responsibility: Handle pause state and menu
+
+    type_safety:
+      interfaces:
+        PauseMenuConfig:
+          properties:
+            - fontSize: string
+            - color: string
+            - spacing: number
+            - options: PauseMenuOption[]
+        PauseMenuOption:
+          properties:
+            - text: string
+            - callback: () => void
+
+    constants_management:
+      UI_CONFIG:
+        PADDING: 20
+        SCORE:
+          X: 20
+          Y: 20
+          FONT_SIZE: "32px"
+        COMBO:
+          FONT_SIZE: "48px"
+          COLOR: "#ffffff"
+        DURATION_BAR:
+          HEIGHT: 5
+          BG_COLOR: 0x333333
+          FG_COLOR: 0x00a2ff
+
+    event_system:
+      implementation:
+        type: Phaser.Events.EventEmitter
+        events:
+          - scoreUpdate
+          - comboBreak
+          - hitObject
+          - pauseGame
+          - resumeGame
+
+    state_management:
+      enum: GameState
+      states:
+        - PLAYING
+        - PAUSED
+        - TRANSITIONING
+
+    input_handling:
+      centralization:
+        method: initializeInputHandlers
+        subMethods:
+          - initializeKeyboardHandlers
+          - initializeMouseHandlers
+          - initializeWindowHandlers
+
+    performance_optimizations:
+      suggestions:
+        - Implement object pooling for frequently created/destroyed objects
+        - Use sprite sheets instead of individual images
+        - Implement proper cleanup in destroy method
+        - Cache frequently accessed values
+
+    error_handling:
+      improvements:
+        asset_loading:
+          try_catch: true
+          error_logging: true
+          fallback_assets: true
+        runtime_checks:
+          null_checks: true
+          type_guards: true
+
+    documentation:
+      requirements:
+        - Add JSDoc comments for methods
+        - Document complex logic
+        - Add inline comments for non-obvious code
+        - Include type information
+      example: |
+        /**
+         * Updates the player's score and combo
+         * @param points - The points to add to the score
+         * @param comboMultiplier - Optional combo multiplier
+         */
+
+    testing_considerations:
+      debug_mode:
+        enabled: false
+        features:
+          - Debug logging
+          - Visual indicators
+          - Performance metrics
+      testability:
+        improvements:
+          - Reduce dependencies
+          - Minimize side effects
+          - Add dependency injection
+          - Create interfaces for testing
+
+    gameplay_preparation:
+      interfaces:
+        HitObject:
+          properties:
+            - x: number
+            - y: number
+            - timing: number
+            - type: "'circle' | 'slider' | 'spinner'"
+      methods:
+        - name: spawnHitObject
+          params: [hitObject: HitObject]
+        - name: calculateAccuracy
+          params: [hitTiming: number]
+          returns: number
+
+    linter_fixes:
+      required_changes:
+        - Add proper type checking for null values
+        - Update TypeScript target to ES2017 or later
+        - Fix postFX blur type definitions
+        - Add proper Scene destroy method override
+        - Handle BaseSound seek property type
