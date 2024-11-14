@@ -17,7 +17,7 @@ export class MainMenu extends Scene {
         logo.setScale(0.3);
 
         this.input.once('pointerdown', () => {
-            this.scene.start('GameScene');
+            this.scene.start('CircleGameplay');
         });
     }
 }

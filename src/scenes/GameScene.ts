@@ -1,4 +1,4 @@
-import { Scene, Sound, Input, Tweens, GameObjects } from 'phaser';
+import { Scene, Sound, Input, Tweens, GameObjects, Types } from 'phaser';
 
 export class GameScene extends Scene {
     protected music: Sound.BaseSound | null = null;
@@ -23,8 +23,8 @@ export class GameScene extends Scene {
     private cursorTrail: Phaser.GameObjects.Image[] = [];
     private readonly MAX_TRAIL_LENGTH = 5; // Adjust this value to change trail length
 
-    constructor() {
-        super('GameScene');
+    constructor(key?: string) {
+        super(key || 'GameScene');
         this.handleBlur = this.pauseGame.bind(this);
     }
 
@@ -56,30 +56,42 @@ export class GameScene extends Scene {
         this.input.off('pointerdown'); // Remove existing handler
 
         // Add Escape key listener
-        this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
-        this.escapeKey.on('down', () => {
-            if (this.paused) {
-                this.resumeGame();
-            } else {
-                this.pauseGame();
+        if (this.input.keyboard) {
+            this.escapeKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ESC);
+            if (this.escapeKey) {
+                this.escapeKey.on('down', () => {
+                    if (this.paused) {
+                        this.resumeGame();
+                    } else {
+                        this.pauseGame();
+                    }
+                });
             }
-        });
+        }
 
         // Add score display with blur filter capability
         this.scoreText = this.add.text(20, 20, 'Score', {
             fontSize: '32px',
             color: '#ffffff'
-        }).setPostPipeline(Phaser.Renderer.WebGL.Pipelines.BlurPostFX);
+        });
 
         this.scoreNumberText = this.add.text(20, 60, '000000', {
             fontSize: '28px',
             color: '#ffffff',
             fontFamily: 'monospace'
-        }).setPostPipeline(Phaser.Renderer.WebGL.Pipelines.BlurPostFX);
+        });
 
-        // Initialize blur but set to 0
-        this.blurFilter = this.scoreText.postFX?.addBlur(0, 0, 0, 4) || null;
-        this.scoreNumberText.postFX?.addBlur(0, 0, 0, 4);
+        // Use proper blur pipeline
+        if (this.game.renderer.type === Phaser.WEBGL) {
+            const pipeline = (this.renderer as Phaser.Renderer.WebGL.WebGLRenderer).pipelines;
+            const blurPipeline = pipeline.get('BlurPostFX');
+            if (blurPipeline) {
+                this.scoreText.setPipeline(blurPipeline);
+                this.scoreNumberText.setPipeline(blurPipeline);
+                this.comboText?.setPipeline(blurPipeline);
+                this.comboNumberText?.setPipeline(blurPipeline);
+            }
+        }
 
         // Add combo display with blur filter capability (moved up 13 pixels)
         this.comboText = this.add.text(20, this.cameras.main.height - 103, 'Combo', {
@@ -164,8 +176,10 @@ export class GameScene extends Scene {
 
     private updateDurationBar(): void {
         if (this.music && this.durationBar && this.durationBarBg) {
-            const progress = this.music.seek / this.music.duration;
-            const maxWidth = this.cameras.main.width - 40; // Total width minus padding on both sides
+            // Use proper type casting for BaseSound
+            const musicSource = this.music as Phaser.Sound.WebAudioSound;
+            const progress = musicSource.seek / musicSource.duration;
+            const maxWidth = this.cameras.main.width - 40;
             const width = maxWidth * progress;
             this.durationBar.width = width;
         }
@@ -209,13 +223,14 @@ export class GameScene extends Scene {
         this.music?.pause();
         this.paused = true;
 
-        // Add blur effect to score
-        this.scoreText?.postFX?.setBlur(2);
-        this.scoreNumberText?.postFX?.setBlur(2);
-
-        // Add blur effect to combo
-        this.comboText?.postFX?.setBlur(2);
-        this.comboNumberText?.postFX?.setBlur(2);
+        // Update blur effects
+        if (this.game.renderer.type === Phaser.WEBGL) {
+            const pipeline = (this.renderer as Phaser.Renderer.WebGL.WebGLRenderer).pipelines;
+            const blurPipeline = pipeline.get('BlurPostFX') as any;
+            if (blurPipeline && typeof blurPipeline.setBlur === 'function') {
+                blurPipeline.setBlur(2);
+            }
+        }
 
         // Ensure score stays visible above the overlay
         this.scoreText?.setDepth(2);
@@ -279,13 +294,14 @@ export class GameScene extends Scene {
         this.comboText?.setDepth(0);
         this.comboNumberText?.setDepth(0);
 
-        // Remove blur effect from score
-        this.scoreText?.postFX?.setBlur(0);
-        this.scoreNumberText?.postFX?.setBlur(0);
-
-        // Remove blur effect from combo
-        this.comboText?.postFX?.setBlur(0);
-        this.comboNumberText?.postFX?.setBlur(0);
+        // Update blur effects
+        if (this.game.renderer.type === Phaser.WEBGL) {
+            const pipeline = (this.renderer as Phaser.Renderer.WebGL.WebGLRenderer).pipelines;
+            const blurPipeline = pipeline.get('BlurPostFX') as any;
+            if (blurPipeline && typeof blurPipeline.setBlur === 'function') {
+                blurPipeline.setBlur(0);
+            }
+        }
 
         // Reset duration bars depth
         this.durationBarBg?.setDepth(0);
@@ -322,9 +338,7 @@ export class GameScene extends Scene {
         // Restore default cursor when leaving the scene
         this.game.canvas.style.cursor = 'default';
         
-        // Existing destroy code...
         this.shutdown();
-        super.destroy();
     }
 
     restartGame(): void { // {{ edit_39 }} Add restartGame method
@@ -342,7 +356,10 @@ export class GameScene extends Scene {
     updateScore(points: number): void {
         this.score += points;
         if (this.scoreNumberText) {
-            this.scoreNumberText.setText(this.score.toString().padStart(6, '0'));
+            // Use alternative padding method if needed
+            const scoreStr = this.score.toString();
+            const paddedScore = '0'.repeat(Math.max(0, 6 - scoreStr.length)) + scoreStr;
+            this.scoreNumberText.setText(paddedScore);
         }
     }
 
