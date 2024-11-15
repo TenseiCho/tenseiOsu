@@ -45,8 +45,11 @@ export class GameScene extends Scene {
         // Scale the image to fit the screen
         flandre.setScale(Math.max(this.cameras.main.width / flandre.width, this.cameras.main.height / flandre.height));
 
-        // Play the Flandre theme
-        this.music = this.sound.add('flandreTheme', { loop: true });
+        // Play the Flandre theme at lower volume
+        this.music = this.sound.add('flandreTheme', { 
+            loop: true,
+            volume: 0.3  // Adjust this value between 0 and 1 (30% volume in this case)
+        });
         this.music.play();
 
         // Add event listeners for window blur
@@ -70,13 +73,13 @@ export class GameScene extends Scene {
         }
 
         // Add score display with blur filter capability
-        this.scoreText = this.add.text(20, 20, 'Score', {
-            fontSize: '32px',
+        this.scoreText = this.add.text(40, 40, 'Score', {
+            fontSize: '48px',
             color: '#ffffff'
         });
 
-        this.scoreNumberText = this.add.text(20, 60, '000000', {
-            fontSize: '28px',
+        this.scoreNumberText = this.add.text(40, 100, '000000', {
+            fontSize: '42px',
             color: '#ffffff',
             fontFamily: 'monospace'
         });

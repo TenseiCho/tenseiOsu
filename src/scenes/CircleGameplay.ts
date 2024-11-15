@@ -23,9 +23,6 @@ export class CircleGameplay extends GameScene {
         // Use existing sound files
         this.load.audio('hitnormal', 'sounds/soft-hitfinish.wav');  // Using hitfinish as normal hit sound
         this.load.audio('hitclap', 'sounds/soft-hitclap.wav');
-        
-        // Load hit particles
-        this.load.image('hitparticle', 'assets/particles/particle.png');
     }
 
     create(): void {
@@ -84,7 +81,7 @@ export class CircleGameplay extends GameScene {
                 pointer.x, pointer.y, circlePos.tx, circlePos.ty
             );
 
-            const hitRadius = 50 * 0.5;
+            const hitRadius = 80 * 0.8;
             
             if (distance <= hitRadius) {
                 hitCircle = true;
@@ -108,8 +105,9 @@ export class CircleGameplay extends GameScene {
                 }
 
                 try {
+                    // Adjust timing calculation for new scale values
                     const scale = approachCircle.scale;
-                    const timingDiff = Math.abs(0.5 - scale);
+                    const timingDiff = Math.abs(0.8 - scale) / 1.6; // Normalize the difference
                     
                     let points = 0;
                     let hitSound = 'hitnormal';
@@ -123,8 +121,11 @@ export class CircleGameplay extends GameScene {
                         points = 50;
                     }
                     
+                    // Only play sound if we actually hit a circle
                     try {
-                        this.sound.play(hitSound);
+                        this.sound.play(hitSound, {
+                            volume: 0.8
+                        });
                     } catch (error) {
                         console.error('Error playing sound:', error);
                     }
@@ -150,9 +151,12 @@ export class CircleGameplay extends GameScene {
             }
         }
 
-        if (!hitCircle) {
+        // Only play miss sound if we clicked on a circle but missed the timing
+        if (hitCircle) {
             try {
-                this.sound.play('hitnormal');
+                this.sound.play('hitnormal', {
+                    volume: 0.8
+                });
             } catch (error) {
                 console.error('Error playing miss sound:', error);
             }
@@ -160,16 +164,6 @@ export class CircleGameplay extends GameScene {
     }
 
     private createHitEffect(x: number, y: number, points: number): void {
-        // Create particle emitter
-        const particles = this.add.particles(x, y, 'hitparticle', {
-            speed: { min: 100, max: 200 },
-            angle: { min: 0, max: 360 },
-            scale: { start: 0.5, end: 0 },
-            lifespan: 500,
-            quantity: 10,
-            blendMode: 'ADD'
-        });
-
         // Show score number
         const scoreText = this.add.text(x, y, points.toString(), {
             fontSize: '32px',
@@ -185,7 +179,6 @@ export class CircleGameplay extends GameScene {
             ease: 'Power2',
             onComplete: () => {
                 scoreText.destroy();
-                particles.destroy();
             }
         });
     }
@@ -193,14 +186,14 @@ export class CircleGameplay extends GameScene {
     private createHitCircleEffect(x: number, y: number): void {
         // Create the hit circle effect
         const hitEffect = this.add.image(x, y, 'hiteffect')
-            .setScale(0.3)
+            .setScale(0.5)
             .setAlpha(0.5)
             .setTint(0xFFFFFF);
 
         // Animate the hit circle
         this.tweens.add({
             targets: hitEffect,
-            scale: 0.5,
+            scale: 0.8,
             alpha: 0,
             duration: 150,
             ease: 'Power2',
@@ -216,13 +209,13 @@ export class CircleGameplay extends GameScene {
             const circleContainer = this.add.container(x, y);
             
             const hitCircle = this.add.image(0, 0, 'hitcircle');
-            hitCircle.setScale(0.5);
+            hitCircle.setScale(0.8);
             
             const hitCircleOverlay = this.add.image(0, 0, 'hitcircleoverlay');
-            hitCircleOverlay.setScale(0.5);
+            hitCircleOverlay.setScale(0.8);
             
             const approachCircle = this.add.image(0, 0, 'approachcircle');
-            approachCircle.setScale(1.5);
+            approachCircle.setScale(2.4);
             
             circleContainer.add([hitCircle, hitCircleOverlay, approachCircle]);
             this.circles.push(circleContainer);
@@ -231,7 +224,7 @@ export class CircleGameplay extends GameScene {
             try {
                 const tween = this.tweens.add({
                     targets: approachCircle,
-                    scale: 0.5,
+                    scale: 0.8,
                     duration: 1000,
                     onComplete: () => {
                         this.handleMiss(circleContainer);

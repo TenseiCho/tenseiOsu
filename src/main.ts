@@ -5,8 +5,8 @@ import { CircleGameplay } from './scenes/CircleGameplay';
 //  Find out more information about the Game Config at: https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
 const config: GameConfig = {
     type: Phaser.AUTO,
-    width: 1024,
-    height: 768,
+    width: 1920,
+    height: 1080,
     parent: 'game-container',
     backgroundColor: '#000000',
     scale: {
