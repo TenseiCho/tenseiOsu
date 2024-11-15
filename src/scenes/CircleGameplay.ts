@@ -20,9 +20,9 @@ export class CircleGameplay extends GameScene {
         this.load.image('approachcircle', 'assets/circles/hitcircleoverlay.png');
         this.load.image('hiteffect', 'assets/circles/hitcircle.png');
         
-        // Load hit sounds
-        this.load.audio('hitnormal', 'assets/sounds/normal-hitnormal.wav');
-        this.load.audio('hitclap', 'assets/sounds/soft-hitclap.wav');
+        // Use existing sound files
+        this.load.audio('hitnormal', 'sounds/soft-hitfinish.wav');  // Using hitfinish as normal hit sound
+        this.load.audio('hitclap', 'sounds/soft-hitclap.wav');
         
         // Load hit particles
         this.load.image('hitparticle', 'assets/particles/particle.png');
@@ -71,13 +71,13 @@ export class CircleGameplay extends GameScene {
         if (this.paused) return;
         
         let hitCircle = false;
-
-        // Create a copy of the circles array to avoid modification during iteration
         const currentCircles = [...this.circles];
 
         for (const circle of currentCircles) {
-            // Check if circle is still valid (not destroyed)
-            if (!circle || !circle.active) continue;
+            if (!circle || !circle.active || !circle.list || circle.list.length < 3) {
+                console.warn('Invalid circle object encountered');
+                continue;
+            }
 
             const circlePos = circle.getWorldTransformMatrix();
             const distance = Phaser.Math.Distance.Between(
@@ -89,63 +89,73 @@ export class CircleGameplay extends GameScene {
             if (distance <= hitRadius) {
                 hitCircle = true;
                 
-                // Safely get the approach circle
                 const approachCircle = circle.list[2] as Phaser.GameObjects.Image;
-                if (!approachCircle) continue;
-
-                const scale = approachCircle.scale;
-                const timingDiff = Math.abs(0.5 - scale);
-                
-                let points = 0;
-                let hitSound = 'hitnormal';
-                
-                if (timingDiff <= 0.05) {
-                    points = 300;
-                    hitSound = 'hitclap';
-                } else if (timingDiff <= 0.1) {
-                    points = 100;
-                    hitSound = 'hitnormal';
-                } else if (timingDiff <= 0.15) {
-                    points = 50;
-                    hitSound = 'hitnormal';
-                }
-                
-                // Play hit sound
-                this.sound.play(hitSound);
-                
-                // Create hit effect
-                this.createHitEffect(circlePos.tx, circlePos.ty, points);
-                
-                // Update score and combo
-                this.updateScore(points);
-                if (points > 0) {
-                    this.increaseCombo();
-                } else {
-                    this.resetCombo();
-                }
-                
-                // Remove the circle and its tween
-                const index = this.circles.indexOf(circle);
-                if (index > -1) {
-                    this.circles.splice(index, 1);
+                if (!approachCircle) {
+                    console.error('Approach circle is null or undefined');
+                    continue;
                 }
 
-                // Find and remove the associated tween
                 const tweenIndex = this.circleTweens.findIndex(tween => 
-                    tween.targets.includes(approachCircle));
+                    tween && tween.targets && tween.targets.includes(approachCircle));
+                
                 if (tweenIndex > -1) {
-                    this.circleTweens[tweenIndex].stop();
-                    this.circleTweens.splice(tweenIndex, 1);
+                    try {
+                        this.circleTweens[tweenIndex].stop();
+                        this.circleTweens.splice(tweenIndex, 1);
+                    } catch (error) {
+                        console.error('Error stopping tween:', error);
+                    }
                 }
 
-                circle.destroy();
-                return;
+                try {
+                    const scale = approachCircle.scale;
+                    const timingDiff = Math.abs(0.5 - scale);
+                    
+                    let points = 0;
+                    let hitSound = 'hitnormal';
+                    
+                    if (timingDiff <= 0.05) {
+                        points = 300;
+                        hitSound = 'hitclap';
+                    } else if (timingDiff <= 0.1) {
+                        points = 100;
+                    } else if (timingDiff <= 0.15) {
+                        points = 50;
+                    }
+                    
+                    try {
+                        this.sound.play(hitSound);
+                    } catch (error) {
+                        console.error('Error playing sound:', error);
+                    }
+                    
+                    this.createHitEffect(circlePos.tx, circlePos.ty, points);
+                    this.updateScore(points);
+                    if (points > 0) {
+                        this.increaseCombo();
+                    } else {
+                        this.resetCombo();
+                    }
+                    
+                    const index = this.circles.indexOf(circle);
+                    if (index > -1) {
+                        this.circles.splice(index, 1);
+                    }
+
+                    circle.destroy();
+                    return;
+                } catch (error) {
+                    console.error('Error processing hit circle:', error);
+                }
             }
         }
 
-        // If we didn't hit any circle, play normal hit sound
         if (!hitCircle) {
-            this.sound.play('hitnormal');
+            try {
+                this.sound.play('hitnormal');
+            } catch (error) {
+                console.error('Error playing miss sound:', error);
+            }
         }
     }
 
@@ -201,46 +211,81 @@ export class CircleGameplay extends GameScene {
     }
 
     private spawnCircle(x: number, y: number): void {
-        console.log('Spawning circle at', x, y);
-        const circleContainer = this.add.container(x, y);
-        
-        const hitCircle = this.add.image(0, 0, 'hitcircle');
-        hitCircle.setScale(0.5);
-        
-        const hitCircleOverlay = this.add.image(0, 0, 'hitcircleoverlay');
-        hitCircleOverlay.setScale(0.5);
-        
-        const approachCircle = this.add.image(0, 0, 'approachcircle');
-        approachCircle.setScale(1.5);
-        
-        circleContainer.add([hitCircle, hitCircleOverlay, approachCircle]);
-        this.circles.push(circleContainer);
-        
-        // Store the tween reference
-        const tween = this.tweens.add({
-            targets: approachCircle,
-            scale: 0.5,
-            duration: 1000,
-            onComplete: () => {
-                this.handleMiss(circleContainer);
+        try {
+            console.log('Spawning circle at', x, y);
+            const circleContainer = this.add.container(x, y);
+            
+            const hitCircle = this.add.image(0, 0, 'hitcircle');
+            hitCircle.setScale(0.5);
+            
+            const hitCircleOverlay = this.add.image(0, 0, 'hitcircleoverlay');
+            hitCircleOverlay.setScale(0.5);
+            
+            const approachCircle = this.add.image(0, 0, 'approachcircle');
+            approachCircle.setScale(1.5);
+            
+            circleContainer.add([hitCircle, hitCircleOverlay, approachCircle]);
+            this.circles.push(circleContainer);
+            
+            // Create and store the tween with error handling
+            try {
+                const tween = this.tweens.add({
+                    targets: approachCircle,
+                    scale: 0.5,
+                    duration: 1000,
+                    onComplete: () => {
+                        this.handleMiss(circleContainer);
+                    }
+                });
+                
+                if (tween) {
+                    this.circleTweens.push(tween);
+                }
+            } catch (error) {
+                console.error('Error creating tween:', error);
             }
-        });
-        
-        this.circleTweens.push(tween);
+        } catch (error) {
+            console.error('Error spawning circle:', error);
+        }
     }
 
     private handleMiss(circle: GameObjects.Container): void {
+        if (!circle) {
+            console.warn('Attempted to handle miss for null circle');
+            return;
+        }
+
         this.resetCombo();
-        circle.destroy();
+        
+        // Remove from circles array first
         const index = this.circles.indexOf(circle);
         if (index > -1) {
             this.circles.splice(index, 1);
         }
-        // Remove the associated tween
-        const tweenIndex = this.circleTweens.findIndex(tween => 
-            tween.targets.includes(circle.list[2]));
-        if (tweenIndex > -1) {
-            this.circleTweens.splice(tweenIndex, 1);
+
+        // Find and remove the associated tween with proper null checks
+        if (circle.list && circle.list[2]) {
+            const tweenIndex = this.circleTweens.findIndex(tween => 
+                tween && tween.targets && tween.targets.includes(circle.list[2]));
+            
+            if (tweenIndex > -1) {
+                try {
+                    // Stop the tween before removing it
+                    if (this.circleTweens[tweenIndex]) {
+                        this.circleTweens[tweenIndex].stop();
+                    }
+                    this.circleTweens.splice(tweenIndex, 1);
+                } catch (error) {
+                    console.error('Error cleaning up tween:', error);
+                }
+            }
+        }
+
+        // Destroy the circle last
+        try {
+            circle.destroy();
+        } catch (error) {
+            console.error('Error destroying circle:', error);
         }
     }
 
